@@ -17,11 +17,11 @@ This project is an ASP.NET Console application for updating the price of ERC tok
 4. Navigate to the folder where you cloned the repository and select the solution file (.sln).
 
 ### 2. Database in MySQL
-1. Use the same DB "etherscan" from the Token Manager project or create the table and seed
+1. Use the same DB "ethscan" from the Token Manager project or create the table and seed
 2. Execute the following SQL commands to create the `token` table and insert sample data:
 
     ```sql
-    CREATE TABLE `token` (
+    CREATE TABLE `tokens` (
         `id` INT(11) NOT NULL AUTO_INCREMENT,
         `symbol` VARCHAR(5) NOT NULL COLLATE 'utf8_general_ci',
         `name` VARCHAR(50) NOT NULL COLLATE 'utf8_general_ci',
@@ -38,7 +38,7 @@ This project is an ASP.NET Console application for updating the price of ERC tok
     ```
 
     ```sql
-    INSERT INTO `token` (`symbol`, `name`, `total_supply`, `contract_address`, `total_holders`, `price`) 
+    INSERT INTO `tokens` (`symbol`, `name`, `total_supply`, `contract_address`, `total_holders`, `price`) 
     VALUES 
     ('VEN', 'Vechain', 35987133, '0xd850942ef8811f2a866692a623011bde52a462c1', 65, 0.00),
     ('ZIR', 'Zilliqa', 53272942, '0x05f4a42e251f2d52b8ed15e9fedaacfcef1fad27', 54, 0.00),
