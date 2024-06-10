@@ -29,7 +29,6 @@ namespace PRCSVC
 
                     string mysql = "server=localhost;port=3306;user=root;database=ethscan;Allow User Variables=true;charset=utf8mb4;";
 
-
                     services.AddDbContext<TokenDbCtx>(options => options.UseMySql(mysql, ServerVersion.AutoDetect(mysql)));
 
                     services.AddHostedService<TokenPriceUpdater>();
@@ -47,12 +46,14 @@ namespace PRCSVC
             _serviceProvider = serviceProvider;
         }
 
+        //Start a timer to keep track of duration each run
         public Task StartAsync(CancellationToken cancellationToken)
         {
             _timer = new Timer(UpdateTokenPrices, null, TimeSpan.Zero, TimeSpan.FromHours(1));
             return Task.CompletedTask;
         }
 
+        //Run price fetch in parallel queue 3 in a batch
         private async void UpdateTokenPrices(object state)
         {
             using (var scope = _serviceProvider.CreateScope())
@@ -73,6 +74,10 @@ namespace PRCSVC
                             var price = await GetTokenPriceAsync(token.Symbol);
                             token.Price = price;
                         }
+                        catch
+                        {
+                            token.Price = 0;
+                        }
                         finally
                         {
                             semaphore.Release();
@@ -81,6 +86,8 @@ namespace PRCSVC
 
                     tasks.Add(task);
                 }
+
+                //when all prices updated, concat update command for mysql
 
                 await Task.WhenAll(tasks);
 
@@ -92,16 +99,24 @@ namespace PRCSVC
             }
         }
 
+        //cryptocompare to fetch price data.
         private static async Task<decimal> GetTokenPriceAsync(string symbol)
         {
-            var apiKey = "your_api_key"; // Replace with your CryptoCompare API key
-            var url = $"https://min-api.cryptocompare.com/data/price?fsym={symbol}&tsyms=USD&api_key={apiKey}";
+          //  var apiKey = "your_api_key"; 
+            var url = $"https://min-api.cryptocompare.com/data/price?fsym={symbol}&tsyms=USD";
 
             using (var httpClient = new HttpClient())
             {
-                var response = await httpClient.GetStringAsync(url);
-                var priceData = JsonConvert.DeserializeObject<Dictionary<string, decimal>>(response);
-                return priceData["USD"];
+                try
+                {
+                    var response = await httpClient.GetStringAsync(url);
+                    var priceData = JsonConvert.DeserializeObject<Dictionary<string, decimal>>(response);
+                    return priceData.ContainsKey("USD") ? priceData["USD"] : 0;
+                }
+                catch
+                {
+                    return 0;
+                }
             }
         }
 
